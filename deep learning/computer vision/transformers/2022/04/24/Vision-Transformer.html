@@ -100,7 +100,7 @@ window.onload = wrap_img;
        • <span class="read-time" title="Estimated read time">
     
     
-      11 min read
+      12 min read
     
 </span></p>
 
@@ -401,6 +401,7 @@ Finally, here is the Transformer architecture:</p>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
 <p><img src="/blog/images/copied_from_nb/../images/transformer_arch.png" alt="" title="Transformer Architecure"></p>
+<p>As shown in the figure above, the Transformer model consists of Multi-Head Attention and MLP (Feed Forward) blocks. In addition, Layer Norm is used before every block and residual connections like in ResNet after every block.</p>
 
 </div>
 </div>
@@ -454,24 +455,16 @@ Finally, here is the Transformer architecture:</p>
 </div>
 </div>
 </div>
-    
-    
-<div class="cell border-box-sizing code_cell rendered">
-<div class="input">
-
+<div class="cell border-box-sizing text_cell rendered">
 <div class="inner_cell">
-    <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">torch</span>
+<div class="text_cell_render border-box-sizing rendered_html">
+<div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">torch</span>
 <span class="kn">import</span> <span class="nn">torch.nn</span> <span class="k">as</span> <span class="nn">nn</span>
 </pre></div>
 
-    </div>
 </div>
 </div>
-
 </div>
-    
-
     
     
 <div class="cell border-box-sizing code_cell rendered">
@@ -536,7 +529,7 @@ Finally, here is the Transformer architecture:</p>
 <div class="cell border-box-sizing text_cell rendered">
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>We will start with the 1st and 2nd step combined. Insted of dividing an input image into patches and then doing Linear Projection step, we combine them with the help of Convolution. The module accepts image size, patch size (originally 16x16), channels (1 - if it is graysclae, 3 - if it is RGB) and embedding dimension (stays constant across the entire network). Pay attention to Convolution operation - we set the kernel_size and stride equal to path_size. This way, the kernel exactly fall into the patches without overlapping.</p>
+<p>We will start with the 1st and 2nd step combined. Insted of dividing an input image into patches and then doing Linear Projection step, we combine them with the help of Convolution. The module accepts image size, patch size (originally 16x16), channels (1 - if it is graysclae, 3 - if it is RGB) and embedding dimension (stays constant across the entire network). Pay attention to Convolution operation - we set the kernel_size and stride equal to path_size. This way, the kernel exactly fall into the patches without overlapping. This way we get Patch Embeddings.</p>
 
 </div>
 </div>
@@ -608,7 +601,7 @@ Finally, here is the Transformer architecture:</p>
         
         <span class="n">qkv</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">qkv</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
         <span class="n">qkv</span> <span class="o">=</span> <span class="n">qkv</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span>
-            <span class="n">n_samples</span><span class="p">,</span> <span class="n">n_tokens</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_eads</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">head_dim</span>
+            <span class="n">n_samples</span><span class="p">,</span> <span class="n">n_tokens</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_heads</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">head_dim</span>
         <span class="p">)</span>
         <span class="n">qkv</span> <span class="o">=</span> <span class="n">qkv</span><span class="o">.</span><span class="n">permute</span><span class="p">(</span>
             <span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">4</span>
@@ -642,6 +635,20 @@ Finally, here is the Transformer architecture:</p>
 </div>
     
 
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>The above code does 4 things:</p>
+<ol>
+<li>Project each patch embedding into three vectors called query, key and value.</li>
+<li>Compute attention scores using dot-product. Queries and keys that are similar will have a large dot product.</li>
+<li>Compute attention weights. Dot products can generate large numbers, which can destabilize the training process. To handle this, the attention scores are first multiplied by a scaling vector and then normalized with a softmax to ensure all the column values add up to 1.</li>
+<li>Update the embeddings by multiplying them with the value vector.</li>
+</ol>
+
+</div>
+</div>
+</div>
     
     
 <div class="cell border-box-sizing code_cell rendered">
@@ -703,6 +710,14 @@ Finally, here is the Transformer architecture:</p>
 </div>
     
 
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>There is nothing extraordinary in the above code except GELU activation function. This is classification part consisting of just two fully connected layers.</p>
+
+</div>
+</div>
+</div>
     
     
 <div class="cell border-box-sizing code_cell rendered">
@@ -769,6 +784,15 @@ Finally, here is the Transformer architecture:</p>
 </div>
     
 
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>In ViT authors used only one block (Encoder block). Original paper uses post layer normalization arrangement when normalization layer is placed in between the skip connections. However, it is hard to train from scratch and therefore the code above uses pre layer normalization arrangement.
+<img src="/blog/images/copied_from_nb/../images/norm_types.jpg" alt="" title="Normalization types"></p>
+
+</div>
+</div>
+</div>
     
     
 <div class="cell border-box-sizing code_cell rendered">
@@ -890,6 +914,14 @@ Finally, here is the Transformer architecture:</p>
 </div>
     
 
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Finally, it is time to assemble all the code blocks into one module to create Vision Transformer model. The code incorporates positional embedding and a <code>[cls]</code> token into the model and then add all other modules.</p>
+
+</div>
+</div>
+</div>
 </div>
 
 
