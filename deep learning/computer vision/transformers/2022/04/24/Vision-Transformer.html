@@ -532,7 +532,7 @@ Finally, here is the Transformer architecture:</p>
         <span class="sd">""" Forward pass</span>
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
-<span class="sd">        x: Shape(n_samples, in_chans, img_size, img_size)</span>
+<span class="sd">        x: Shape</span>
 <span class="sd">        """</span>
         <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">proj</span><span class="p">(</span>
             <span class="n">x</span>
@@ -633,21 +633,21 @@ Finally, here is the Transformer architecture:</p>
         <span class="p">)</span>
             
         <span class="n">q</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="o">=</span> <span class="n">qkv</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">qkv</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">qkv</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
-        <span class="n">k_t</span> <span class="o">=</span> <span class="n">k</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>  <span class="c1"># (n_samples, n_heads, head_dim, n_patches + 1)</span>
+        <span class="n">k_t</span> <span class="o">=</span> <span class="n">k</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
         <span class="n">dp</span> <span class="o">=</span> <span class="p">(</span>
            <span class="n">q</span> <span class="o">@</span> <span class="n">k_t</span>
-        <span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">scale</span> <span class="c1"># (n_samples, n_heads, n_patches + 1, n_patches + 1)</span>
-        <span class="n">attn</span> <span class="o">=</span> <span class="n">dp</span><span class="o">.</span><span class="n">softmax</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>  <span class="c1"># (n_samples, n_heads, n_patches + 1, n_patches + 1)</span>
+        <span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">scale</span> 
+        <span class="n">attn</span> <span class="o">=</span> <span class="n">dp</span><span class="o">.</span><span class="n">softmax</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span> 
         <span class="n">attn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">attn_drop</span><span class="p">(</span><span class="n">attn</span><span class="p">)</span>
 
-        <span class="n">weighted_avg</span> <span class="o">=</span> <span class="n">attn</span> <span class="o">@</span> <span class="n">v</span>  <span class="c1"># (n_samples, n_heads, n_patches +1, head_dim)</span>
+        <span class="n">weighted_avg</span> <span class="o">=</span> <span class="n">attn</span> <span class="o">@</span> <span class="n">v</span>  
         <span class="n">weighted_avg</span> <span class="o">=</span> <span class="n">weighted_avg</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span>
                 <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span>
-        <span class="p">)</span>  <span class="c1"># (n_samples, n_patches + 1, n_heads, head_dim)</span>
-        <span class="n">weighted_avg</span> <span class="o">=</span> <span class="n">weighted_avg</span><span class="o">.</span><span class="n">flatten</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>  <span class="c1"># (n_samples, n_patches + 1, dim)</span>
+        <span class="p">)</span>
+        <span class="n">weighted_avg</span> <span class="o">=</span> <span class="n">weighted_avg</span><span class="o">.</span><span class="n">flatten</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> 
 
-        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">proj</span><span class="p">(</span><span class="n">weighted_avg</span><span class="p">)</span>  <span class="c1"># (n_samples, n_patches + 1, dim)</span>
-        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">proj_drop</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>  <span class="c1"># (n_samples, n_patches + 1, dim)</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">proj</span><span class="p">(</span><span class="n">weighted_avg</span><span class="p">)</span> 
+        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">proj_drop</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>  
 
         <span class="k">return</span> <span class="n">x</span>
 </pre></div>
@@ -724,18 +724,18 @@ Finally, here is the Transformer architecture:</p>
         <span class="sd">"""Run forward pass.</span>
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
-<span class="sd">        x : Shape `(n_samples, n_patches + 1, in_features)`.</span>
+<span class="sd">        x : Shape</span>
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
-<span class="sd">        Shape `(n_samples, n_patches +1, out_features)`</span>
+<span class="sd">        Shape</span>
 <span class="sd">        """</span>
         <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fc1</span><span class="p">(</span>
                 <span class="n">x</span>
-        <span class="p">)</span> <span class="c1"># (n_samples, n_patches + 1, hidden_features)</span>
-        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">act</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>  <span class="c1"># (n_samples, n_patches + 1, hidden_features)</span>
-        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>  <span class="c1"># (n_samples, n_patches + 1, hidden_features)</span>
-        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fc2</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>  <span class="c1"># (n_samples, n_patches + 1, out_features)</span>
-        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>  <span class="c1"># (n_samples, n_patches + 1, out_features)</span>
+        <span class="p">)</span> 
+        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">act</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> 
+        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>  
+        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fc2</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>  
+        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>  
 
         <span class="k">return</span> <span class="n">x</span>
 </pre></div>
@@ -944,9 +944,9 @@ Finally, here is the Transformer architecture:</p>
 
         <span class="n">cls_token</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cls_token</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span>
                 <span class="n">n_samples</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span>
-        <span class="p">)</span>  <span class="c1"># (n_samples, 1, embed_dim)</span>
-        <span class="n">x</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">((</span><span class="n">cls_token</span><span class="p">,</span> <span class="n">x</span><span class="p">),</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>  <span class="c1"># (n_samples, 1 + n_patches, embed_dim)</span>
-        <span class="n">x</span> <span class="o">=</span> <span class="n">x</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">pos_embed</span>  <span class="c1"># (n_samples, 1 + n_patches, embed_dim)</span>
+        <span class="p">)</span> 
+        <span class="n">x</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">((</span><span class="n">cls_token</span><span class="p">,</span> <span class="n">x</span><span class="p">),</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>  
+        <span class="n">x</span> <span class="o">=</span> <span class="n">x</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">pos_embed</span>  
         <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pos_drop</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
 
         <span class="k">for</span> <span class="n">block</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">blocks</span><span class="p">:</span>
@@ -972,6 +972,14 @@ Finally, here is the Transformer architecture:</p>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
 <p>Finally, it is time to assemble all the code blocks into one module to create Vision Transformer model. The code incorporates positional embedding and a <code>[cls]</code> token into the model and then add all other modules.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>In this blog post we covered all about Transformer architecture, starting from encoder-decoder framework to application of Transformer architecture in Computer Vision. In the next post, we will apply the model in a classification task.</p>
 
 </div>
 </div>
