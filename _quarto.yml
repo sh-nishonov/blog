@@ -2,14 +2,13 @@ project:
   type: website
 
 website:
-  title: "blog"
+  title: "Central Limit"
   navbar:
     right:
       - about.qmd
       - icon: github
-        href: https://github.com/
-      - icon: twitter
-        href: https://twitter.com
+        href: https://github.com/sh-nishonov
+      
 format:
   html:
     theme: cosmo
