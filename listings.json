@@ -2,6 +2,7 @@
   {
     "listing": "/index.html",
     "items": [
+      "/posts/roc_auc/2023-09-09-roc.html",
       "/posts/2023-07-30-wb.html",
       "/posts/2022-04-24-vision-transformer.html"
     ]
